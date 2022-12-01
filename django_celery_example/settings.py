@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 import os
 from pathlib import Path
 
+from kombu import Queue
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -161,3 +164,17 @@ CHANNEL_LAYERS = {
         }
     }
 }
+
+CELERY_TASK_DEFAULT_QUEUE = "default"
+
+# force all queues to be explicitly listed in 'CELERY_TAS_QUEUES' to help
+# prevent typos
+CELERY_TASK_CREATE_MISSING_QUEUES = False
+
+CELERY_TASK_QUEUES = (
+    # need to define default queue here or exception would be raised
+    Queue("default"),
+
+    Queue("high_priority"),
+    Queue("low_priority"),
+)
