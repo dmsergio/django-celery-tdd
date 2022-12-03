@@ -4,6 +4,8 @@ import requests
 from celery import shared_task
 from celery.signals import task_postrun
 from celery.utils.log import get_task_logger
+from django.contrib.auth.models import User
+from django.db import transaction
 
 from django_celery_example.base_task_retry import BaseTaskRetry
 from polls.consumers import notify_channel_layer
@@ -40,6 +42,12 @@ def task_process_notification(self):
     #     raise self.retry(exc=e, countdown=5)
 
 
+@shared_task()
+def task_send_welcome_email(user_pk):
+    user = User.objects.get(pk=user_pk)
+    logger.info(f"send email to {user.email} {user.pk}")
+
+
 @shared_task(bind=True, base=BaseTaskRetry)
 def task_process_notification_base_retry(self):
     raise Exception()
@@ -73,3 +81,14 @@ def dynamic_example_two():
 @shared_task(name="high_priority:dynamic_example_three")
 def dynamic_example_three():
     logger.info("Example three")
+
+
+@shared_task()
+def task_transaction_test():
+    with transaction.atomic():
+        from .views import random_username
+        username = random_username()
+        user = User.objects.create_user(username, 'lennon@thebeatles.com', 'johnpassword')
+        user.save()
+        logger.info(f'send email to {user.pk}')
+        raise Exception('test')

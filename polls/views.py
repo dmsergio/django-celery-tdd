@@ -1,15 +1,21 @@
 import json
 import logging
 import random
+import time
 
 import requests
 from celery.result import AsyncResult
+from django.contrib.auth.models import User
+from django.db import transaction
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from string import ascii_lowercase
 
 from polls.forms import YourForm
-from polls.tasks import sample_task, task_process_notification
+from polls.tasks import sample_task
+from polls.tasks import task_process_notification
+from polls.tasks import task_send_welcome_email
 
 
 logger = logging.getLogger(__name__)
@@ -24,6 +30,10 @@ def api_call(email):
 
     # used for simulating a call to a third-party api
     requests.post("https://httpbin.org/delay/5")
+
+
+def random_username():
+    return "".join([random.choice(ascii_lowercase) for _ in range(5)])
 
 
 # views
@@ -57,6 +67,7 @@ def subscribe_ws(request):
 
 def task_status(request):
     task_id = request.GET.get("task_id")
+    response = {"error": "not found"}
 
     if task_id:
         task = AsyncResult(task_id)
@@ -70,7 +81,7 @@ def task_status(request):
             }
         else:
             response = {"state": state}
-        return JsonResponse(response)
+    return JsonResponse(response)
 
 
 @csrf_exempt
@@ -90,3 +101,18 @@ def webhook_test_async(request):
     task = task_process_notification.delay()
     logger.info(task.id)
     return HttpResponse("pong")
+
+
+@transaction.atomic
+def transaction_celery(request):
+    username = random_username()
+    user = User.objects.create_user(
+        username,
+        "lennon@thebeatles.com",
+        "johnpassword",
+    )
+    logging.info(f"create user {user.pk}")
+    transaction.on_commit(lambda: task_send_welcome_email.delay(user.pk))
+
+    time.sleep(1)
+    return HttpResponse(f"User: {user.username}; PK: {user.pk}")
