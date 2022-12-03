@@ -18,15 +18,25 @@ def sample_task(email):
     api_call(email)
 
 
-@shared_task(bind=True)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_kwargs={
+        "max_retries": 5,  # default=3; None is to disable the retry limit
+        # "countdown": 5,  # 5 seconds after retry the failed task
+    },
+    retry_backoff=True,  # exponential retry time; if a number is set, it is used as a delay factor
+    # time_limit=10,  # hard time limit, in seconds, for this task
+    # soft_time_limit=10,  # soft time limit for this task
+)
 def task_process_notification(self):
-    try:
-        if not random.choice([0, 1]):
-            raise Exception()
-        requests.post("https://httpbin.org/delay/5")
-    except Exception as e:
-        logger.error("exception raised, it would be retry after 5 seconds")
-        raise self.retry(exc=e, countdown=5)
+    # try:
+    if not random.choice([0, 1]):
+        raise Exception()
+    requests.post("https://httpbin.org/delay/5")
+    # except Exception as e:
+    #     logger.error("exception raised, it would be retry after 5 seconds")
+    #     raise self.retry(exc=e, countdown=5)
 
 
 @task_postrun.connect
