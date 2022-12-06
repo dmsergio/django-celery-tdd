@@ -101,3 +101,15 @@ def task_transaction_test():
 @shared_task()
 def task_test_logger():
     logger.info("test")
+
+
+@shared_task(bind=True)
+def task_add_subscribe(self, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+        requests.post(
+            "https://httpbin.org/delay/5",
+            data={"email": user.email},
+        )
+    except Exception as e:
+        raise self.retry(exc=e)
