@@ -20,14 +20,13 @@ app = Celery("Django Celery")
 # config keys has 'CELERY' prefix
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
-# discover and load tasks.py form all registred Django apps
+# discover and load tasks.py form all registered Django apps
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 @app.task
 def divide(x:int, y:int):
     # from celery.contrib import rdb
     # rdb.set_trace()
-
     import time
     time.sleep(10)
     return x / y
@@ -35,7 +34,8 @@ def divide(x:int, y:int):
 
 @after_setup_logger.connect()
 def on_after_setup_logger(logger, **kwargs):
-    formatter = logger.handlers[0].formatter
-    file_handler = logging.FileHandler("celery.log")
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    # formatter = logger.handlers[0].formatter
+    # file_handler = logging.FileHandler("celery.log")
+    # file_handler.setFormatter(formatter)
+    # logger.addHandler(file_handler)
+    pass
