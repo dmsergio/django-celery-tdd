@@ -88,7 +88,16 @@ def task_transaction_test():
     with transaction.atomic():
         from .views import random_username
         username = random_username()
-        user = User.objects.create_user(username, 'lennon@thebeatles.com', 'johnpassword')
+        user = User.objects.create_user(
+            username,
+            "lennon@thebeatles.com",
+            "johnpassword",
+        )
         user.save()
-        logger.info(f'send email to {user.pk}')
-        raise Exception('test')
+        logger.info(f"send email to {user.pk}")
+        raise Exception("test")
+
+
+@shared_task()
+def task_test_logger():
+    logger.info("test")

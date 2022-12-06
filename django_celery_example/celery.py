@@ -1,6 +1,8 @@
+import logging
 import os
 
 from celery import Celery
+from celery.signals import after_setup_logger
 
 from django.conf import settings
 
@@ -29,3 +31,11 @@ def divide(x:int, y:int):
     import time
     time.sleep(10)
     return x / y
+
+
+@after_setup_logger.connect()
+def on_after_setup_logger(logger, **kwargs):
+    formatter = logger.handlers[0].formatter
+    file_handler = logging.FileHandler("celery.log")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)

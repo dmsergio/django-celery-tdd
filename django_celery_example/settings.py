@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
+import logging.config
 import os
 from pathlib import Path
 
+from django.utils.log import DEFAULT_LOGGING
 from kombu import Queue
 
 
@@ -31,6 +33,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOG_FORMAT = "[%(asctime)s] %(levelname)-8s => %(module)s.%(funcName)s: %(message)s"
 
 # Application definition
 
@@ -136,6 +139,40 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGGING_CONFIG = None
+
+LOGLEVEL = os.getenv("LOGLEVEL", "info").upper()
+
+logging.config.dictConfig({
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "default": {
+            "format": LOG_FORMAT,
+        },
+        "django.server": DEFAULT_LOGGING["formatters"]["django.server"],
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+        },
+        "django.server": DEFAULT_LOGGING["handlers"]["django.server"],
+    },
+    "loggers": {
+        "": {
+            "level": LOGLEVEL,
+            "handlers": ["console"],
+        },
+        "app": {
+            "level": LOGLEVEL,
+            "handlers": ["console"],
+            "propagate": False,
+        },
+        "django.server": DEFAULT_LOGGING["loggers"]["django.server"],
+    },
+})
+
 # Celery
 CELERY_BROKER_URL = os.environ.get(
     "CELERY_BROKER",
@@ -143,7 +180,6 @@ CELERY_BROKER_URL = os.environ.get(
 )
 CELERY_RESULT_BACKEND = os.environ.get(
     "CELERY_BACKEND",
-
     "redis://127.0.0.1:6379/0",
 )
 CELERY_BEAT_SCHEDULE = {
@@ -194,3 +230,6 @@ def route_task(name, args, kwargs, options, task=None, **kw):
     return {"queue": "default"}
 
 CELERY_TASK_ROUTES = (route_task,)
+
+CELERY_WORKER_LOG_FORMAT = LOG_FORMAT
+CELERY_WORKER_TASK_LOG_FORMAT = LOG_FORMAT
