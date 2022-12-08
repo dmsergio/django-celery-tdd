@@ -4,11 +4,14 @@ channels==3.0.5
 channels-redis==3.4.1
 Django==4.0.7
 django-celery-beat==2.4.0
+factory-boy==3.2.1
 flower==1.2.0
 psycopg2-binary==2.9.2
 redis==4.3.4
 requests==2.28.1
 pytest==7.1.2
+pytest-cov==3.0.0
 pytest-django==4.5.2
+pytest-factoryboy==2.5.0
 sqlparse==0.4.3
 watchfiles==0.16.1  # used to restart celery workers
